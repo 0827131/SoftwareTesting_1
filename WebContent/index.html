@@ -1,0 +1,153 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+
+<title>Ticketline</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="css/reset-min.css" rel="stylesheet" type="text/css" />
+<link href="css/base-min.css" rel="stylesheet" type="text/css" />
+<link href="css/fonts-min.css" rel="stylesheet" type="text/css" />
+<link href="css/flick/jquery-ui-1.8.5.custom.css" rel="stylesheet" type="text/css" />
+<link href="css/style.css?<%= System.currentTimeMillis() %>" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="js/jquery-1.4.2.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.8.5.custom.min.js"></script>
+<script type="text/javascript" src="js/jquery.tmpl.min.js"></script>
+<script type="text/javascript" src="js/ticketline.js?<%= System.currentTimeMillis() %>"></script>
+
+</head>
+<body>
+
+<div id="header">
+	<img src="img/ticketline_logo.png" alt="Ticketline Logo" />
+	<div id="title">TICKETLINE</div>
+
+</div>
+
+<div id="breadcrumbs">
+  <a href="#" onclick="showVeranstaltungen();">Veranstaltungen</a>
+  <span id="breadcrumb_veranstaltung"> &gt; <a id="link_veranstaltung" href="#" onclick="showVeranstaltung();"></a></span>
+  <span id="breadcrumb_auffuehrung"> &gt; <a id="link_auffuehrung" href="#"></a></span>
+  <div id="ajaxloader"><img src="img/ajaxloader_2.gif" /></div>
+</div>
+
+
+<div id="maincontent_veranstaltungen" class="content">
+	<h1>Veranstaltungen</h1>
+	<ul id="veranstaltungLinks"></ul>
+</div>
+
+<div id="maincontent_veranstaltung" class="content">	
+</div>
+
+<div id="maincontent_auffuehrung" class="content">
+</div>
+
+<div id="maincontent_transaktionen" class="content">
+	<h1>Transaktion löschen</h1>
+	<ul id="transaktionLinks"></ul>
+</div>
+
+<div id="footer">
+Copyright &copy; 2010 TU Wien - INSO
+</div>
+
+<script id="template_veranstaltungen" type="text/x-jquery-tmpl">
+	<li>
+		<a id="veranstaltung_{{= id}}" href="#" class="veranstaltungLink">{{= bezeichnung}}</a>
+	</li>
+</script>
+
+<script id="template_veranstaltung" type="text/x-jquery-tmpl">
+	<h1>{{= bezeichnung}}</h1>
+	<p>{{= inhalt}}</p>
+	<h2>Auff&uuml;hrungen</h2>
+	<ul>
+		{{each auffuehrungen}}
+		<li>
+			<a id="auffuehrung_{{= $value.id}}" href="#" class="auffuehrungLink">{{= $value.date}}</a>
+		</li>
+		{{/each}}
+	</ul>
+</script>
+
+<script id="template_auffuehrung" type="text/x-jquery-tmpl">
+	<h1>{{= ort.bezeichnung}} {{= saal.bezeichnung}} {{= datum}} {{= uhrzeit}}</h1>
+
+	<div id="success_message">
+	</div>
+	<div id="error_message">
+	</div>
+
+	<table>
+		<tr>
+			<td style="font-weight: bold">Preiskategorie:</td><td>{{= preiskategorie}}</td>
+		</tr>
+		<tr>
+			<td style="font-weight: bold">Storniert:</td><td>{{if storniert}}ja{{/if}} {{if storniert == false}}nein{{/if}}</td>
+		</tr>
+		<tr>
+			<td style="font-weight: bold">Hinweis:</td><td>{{= hinweis}}</td>
+		</tr>
+	</table>
+
+	<table>
+	{{each(i, reihe) belegung}}
+		<tr>
+			<td>{{= reihe.bezeichnung}}</td>
+
+			{{each(j, platz) reihe.plaetze}}
+				<td>
+					{{if platz.status == "LEER"}}
+						<input type="button" class="platz leer" value=" &nbsp; " disabled="disabled" />
+					{{else platz.status == "RESERVIERT"}}
+						<input type="button" class="platz reserviert" value=" {{= platz.nummer}} " disabled="disabled" />
+					{{else platz.status == "GEBUCHT"}}
+						<input type="button" class="platz gebucht" value=" {{= platz.nummer}} " disabled="disabled" />
+					{{else platz.status == "FREI"}}
+						<input id="platz_{{= reihe.id}}_{{= platz.nummer}}" type="button" class="platz frei" value=" {{= platz.nummer}} " title="Freier Platz" />
+					{{/if}}
+				</td>
+			{{/each}}
+		</tr>
+	{{/each}}
+	</table>
+	<div style="text-align: right; margin: 10px;">
+		<input type="button" id="executeReservierung" value="Reservierung durchführen" />
+	</div>
+	<table>
+		<tr>
+			<td colspan="2"><span style="font-weight: bold">Beschreibung:</span></td>
+		</tr>
+		<tr>
+			<td><input type="button" class="platz" style="border-color: #00CC00; background-color: #BFFFBF;" disabled="disabled" /></td>
+			<td>Freier Platz</td>
+		</tr>
+		<tr>
+			<td><input type="button" class="platz" style="border-color: #009999; background-color: #80C9FF;" disabled="disabled" /></td>
+			<td>Für diese Reservierung markiert</td>
+		</tr>
+		<tr>
+			<td><input type="button" class="platz reserviert" disabled="disabled" /></td>
+			<td>Reservierter Platz</td>
+		</tr>
+		<tr>
+			<td><input type="button" class="platz gebucht" disabled="disabled" /></td>
+			<td>Verkaufter Platz</td>
+		</tr>
+		<tr>
+			<td><input type="button" class="platz leer" disabled="disabled" /></td>
+			<td>Platz nicht vorhanden</td>
+		</tr>
+	</table>
+</script>
+
+<script id="template_transaktionen" type="text/x-jquery-tmpl">
+	<li id="transaktion_{{= id}}">
+		<a id="atransaktion_{{= id}}" href="#" class="transaktionLink">Reservierung {{= reservierungsnr}}</a>
+	</li>
+</script>
+
+</body>
+</html>
+
+
